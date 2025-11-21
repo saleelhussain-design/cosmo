@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLASTPHEMY Event - Ticket Booking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .ticket-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .ticket-info .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .ticket-info .row.total {
+            border-top: 2px solid #667eea;
+            padding-top: 15px;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #667eea;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
+        }
+
+        /* Email Template Styles (for reference) */
+        .email-template {
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .email-body {
+            padding: 30px;
+        }
+
+        .ticket-card {
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .qr-code {
+            margin: 20px 0;
+        }
+
+        .email-footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>?? BLASTPHEMY</h1>
+            <p>Secure Your Tickets Now!</p>
+        </div>
+
+        <div class="form-container">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <form id="ticketForm">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required placeholder="+971 50 123 4567">
+                </div>
+
+                <div class="form-group">
+                    <label for="tickets">Number of Tickets *</label>
+                    <select id="tickets" name="tickets" required>
+                        <option value="1">1 Ticket</option>
+                        <option value="2">2 Tickets</option>
+                        <option value="3">3 Tickets</option>
+                        <option value="4">4 Tickets</option>
+                        <option value="5">5 Tickets</option>
+                        <option value="6">6 Tickets</option>
+                        <option value="7">7 Tickets</option>
+                        <option value="8">8 Tickets</option>
+                        <option value="9">9 Tickets</option>
+                        <option value="10">10 Tickets</option>
+                    </select>
+                </div>
+
+                <div class="ticket-info">
+                    <div class="row">
+                        <span>Price per ticket:</span>
+                        <span>199 AED</span>
+                    </div>
+                    <div class="row">
+                        <span>Number of tickets:</span>
+                        <span id="ticketCount">1</span>
+                    </div>
+                    <div class="row total">
+                        <span>Total Amount:</span>
+                        <span id="totalAmount">199 AED</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Proceed to Payment
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your booking...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            TICKET_PRICE: 199,
+            EVENT_NAME: 'BLASTPHEMY Event',
+            EVENT_DATE: '2024-12-31', // Update with actual event date
+            MAMOPAY_API_KEY: 'YOUR_MAMOPAY_API_KEY', // Replace with your actual API key
+            MAMOPAY_BASE_URL: 'https://business.mamopay.com/manage_api/v1',
+            GOOGLE_SHEETS_WEBHOOK: 'YOUR_GOOGLE_APPS_SCRIPT_URL', // Replace with your Google Apps Script URL
+            SUCCESS_URL: window.location.origin + '/success.html',
+            FAILURE_URL: window.location.origin + '/failure.html'
+        };
+
+        // DOM Elements
+        const ticketForm = document.getElementById('ticketForm');
+        const ticketsSelect = document.getElementById('tickets');
+        const ticketCountSpan = document.getElementById('ticketCount');
+        const totalAmountSpan = document.getElementById('totalAmount');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // Update total amount when ticket count changes
+        ticketsSelect.addEventListener('change', function() {
+            const ticketCount = parseInt(this.value);
+            const totalAmount = ticketCount * CONFIG.TICKET_PRICE;
+            ticketCountSpan.textContent = ticketCount;
+            totalAmountSpan.textContent = totalAmount + ' AED';
+        });
+
+        // Generate unique order ID
+        function generateOrderId() {
+            return 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        // Generate QR Code data
+        function generateQRCodeData(orderData) {
+            return JSON.stringify({
+                orderId: orderData.orderId,
+                name: orderData.name,
+                email: orderData.email,
+                tickets: orderData.tickets,
+                event: CONFIG.EVENT_NAME,
+                date: CONFIG.EVENT_DATE
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+            setTimeout(() => {
+                errorMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.add('active');
+            setTimeout(() => {
+                successMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        // Save to Google Sheets
+        async function saveToGoogleSheets(orderData) {
+            try {
+                const response = await fetch(CONFIG.GOOGLE_SHEETS_WEBHOOK, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                console.log('Data saved to Google Sheets');
+                return true;
+            } catch (error) {
+                console.error('Error saving to Google Sheets:', error);
+                return false;
+            }
+        }
+
+        // Create Mamopay Payment Link
+        async function createPaymentLink(orderData) {
+            try {
+                const response = await fetch(`${CONFIG.MAMOPAY_BASE_URL}/links`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.MAMOPAY_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: `${CONFIG.EVENT_NAME} - ${orderData.tickets} Ticket(s)`,
+                        description: `Ticket booking for ${orderData.name}`,
+                        amount: orderData.totalAmount,
+                        amount_currency: 'AED',
+                        return_url: CONFIG.SUCCESS_URL + '?orderId=' + orderData.orderId,
+                        failure_return_url: CONFIG.FAILURE_URL + '?orderId=' + orderData.orderId,
+                        enable_customer_details: true,
+                        enable_quantity: false,
+                        enable_tips: false,
+                        active: true,
+                        custom_data: {
+                            orderId: orderData.orderId,
+                            customerName: orderData.name,
+                            customerEmail: orderData.email,
+                            customerPhone: orderData.phone,
+                            tickets: orderData.tickets
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create payment link');
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error creating payment link:', error);
+                throw error;
+            }
+        }
+
+        // Send confirmation email (this would typically be done server-side)
+        function sendConfirmationEmail(orderData, qrCodeDataURL) {
+            // In a real implementation, this would call your backend API
+            // which would send the email using a service like SendGrid, Mailgun, etc.
+            console.log('Email would be sent to:', orderData.email);
+            console.log('QR Code:', qrCodeDataURL);
+            
+            // Email template structure (for backend implementation)
+            const emailHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+                        .email-container { max-width: 600px; margin: 0 auto; background: white; }
+                        .email-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+                        .email-header h1 { margin: 0; font-size: 2em; }
+                        .email-body { padding: 30px; }
+                        .ticket-card { border: 2px solid #667eea; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; }
+                        .ticket-info { margin: 15px 0; }
+                        .ticket-info strong { color: #667eea; }
+                        .qr-code { margin: 20px 0; }
+                        .qr-code img { max-width: 200px; }
+                        .email-footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 0.9em; }
+                        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="email-header">
+                            <h1>?? ${CONFIG.EVENT_NAME}</h1>
+                            <p>Your Ticket Confirmation</p>
+                        </div>
+                        <div class="email-body">
+                            <h2>Hi ${orderData.name}!</h2>
+                            <p>Thank you for booking tickets to ${CONFIG.EVENT_NAME}. Your payment has been confirmed!</p>
+                            
+                            <div class="ticket-card">
+                                <h3>?? Your Ticket Details</h3>
+                                <div class="ticket-info">
+                                    <p><strong>Order ID:</strong> ${orderData.orderId}</p>
+                                    <p><strong>Number of Tickets:</strong> ${orderData.tickets}</p>
+                                    <p><strong>Total Amount:</strong> ${orderData.totalAmount} AED</p>
+                                    <p><strong>Event Date:</strong> ${CONFIG.EVENT_DATE}</p>
+                                </div>
+                                
+                                <div class="qr-code">
+                                    <p><strong>Your Entry QR Code:</strong></p>
+                                    <img src="${qrCodeDataURL}" alt="QR Code">
+                                    <p style="font-size: 0.9em; color: #666;">Present this QR code at the venue entrance</p>
+                                </div>
+                            </div>
+                            
+                            <p><strong>Important Information:</strong></p>
+                            <ul style="text-align: left; color: #666;">
+                                <li>Please arrive 30 minutes before the event starts</li>
+                                <li>This QR code is valid for ${orderData.tickets} person(s)</li>
+                                <li>Keep this email safe - you'll need it for entry</li>
+                                <li>No refunds or exchanges</li>
+                            </ul>
+                            
+                            <p>If you have any questions, please contact us at support@blastphemy.com</p>
+                        </div>
+                        <div class="email-footer">
+                            <p>© 2024 BLASTPHEMY Event. All rights reserved.</p>
+                            <p>This is an automated email. Please do not reply.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            return emailHTML;
+        }
+
+        // Handle form submission
+        ticketForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Get form data
+            const formData = {
+                orderId: generateOrderId(),
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                tickets: parseInt(document.getElementById('tickets').value),
+                totalAmount: parseInt(document.getElementById('tickets').value) * CONFIG.TICKET_PRICE,
+                eventName: CONFIG.EVENT_NAME,
+                eventDate: CONFIG.EVENT_DATE,
+                timestamp: new Date().toISOString()
+            };
+
+            // Validate form
+            if (!formData.name || !formData.email || !formData.phone) {
+                showError('Please fill in all required fields');
+                return;
+            }
+
+            // Show loading
+            loading.classList.add('active');
+            submitBtn.disabled = true;
+            ticketForm.style.display = 'none';
+
+            try {
+                // Generate QR Code
+                const qrCodeData = generateQRCodeData(formData);
+                
+                // Create a temporary div for QR code generation
+                const qrDiv = document.createElement('div');
+                qrDiv.style.display = 'none';
+                document.body.appendChild(qrDiv);
+                
+                const qrCode = new QRCode(qrDiv, {
+                    text: qrCodeData,
+                    width: 256,
+                    height: 256
+                });
+
+                // Wait for QR code to generate
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const qrCodeDataURL = qrDiv.querySelector('canvas').toDataURL();
+                formData.qrCode = qrCodeDataURL;
+                
+                // Clean up
+                document.body.removeChild(qrDiv);
+
+                // Save to Google Sheets
+                await saveToGoogleSheets(formData);
+
+                // Create Mamopay payment link
+                const paymentLink = await createPaymentLink(formData);
+
+                // Store order data in localStorage for later retrieval
+                localStorage.setItem('pendingOrder_' + formData.orderId, JSON.stringify(formData));
+
+                // Redirect to payment page
+                if (paymentLink && paymentLink.payment_url) {
+                    window.location.href = paymentLink.payment_url;
+                } else {
+                    throw new Error('Invalid payment link response');
+                }
+
+            } catch (error) {
+                console.error('Error processing booking:', error);
+                showError('An error occurred while processing your booking. Please try again.');
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+                ticketForm.style.display = 'block';
+            }
+        });
+
+        // Handle payment success (call this on success page)
+        function handlePaymentSuccess(orderId) {
+            const orderData = JSON.parse(localStorage.getItem('pendingOrder_' + orderId));
+            if (orderData) {
+                // Send confirmation email (implement server-side)
+                const emailHTML = sendConfirmationEmail(orderData, orderData.qrCode);
+                
+                // Update Google Sheets with payment status
+                saveToGoogleSheets({
+                    ...orderData,
+                    paymentStatus: 'completed',
+                    paymentCompletedAt: new Date().toISOString()
+                });
+
+                // Clean up
+                localStorage.removeItem('pendingOrder_' + orderId);
+                
+                showSuccess('Payment successful! Check your email for ticket details.');
+            }
+        }
+
+        // Handle payment failure (call this on failure page)
+        function handlePaymentFailure(orderId) {
+            const orderData = JSON.parse(localStorage.getItem('pendingOrder_' + orderId));
+            if (orderData) {
+                // Update Google Sheets with payment status
+                saveToGoogleSheets({
+                    ...orderData,
+                    paymentStatus: 'failed',
+                    paymentFailedAt: new Date().toISOString()
+                });
+
+                showError('Payment failed. Please try again.');
+            }
+        }
+
+        // Check if we're on success/failure page
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            if (orderId && window.location.pathname.includes('success')) {
+                handlePaymentSuccess(orderId);
+            } else if (orderId && window.location.pathname.includes('failure')) {
+                handlePaymentFailure(orderId);
+            }
+        });
+    </script>
+</body>
+</html>
